@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Halal Food Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Halal Finder</h1>
+        <div class="controls">
+            <button id="locate-btn">Find My Location</button>
+            <div class="toggle-container">
+                <button id="toggle-list" class="toggle-btn active">List</button>
+                <button id="toggle-map" class="toggle-btn">Map</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="list-view" class="view">
+            <div id="loader" class="hidden">Searching nearby...</div>
+            <div id="error-msg" class="hidden"></div>
+            <ul id="restaurant-list">
+                <li class="placeholder">Click "Find My Location" to start.</li>
+            </ul>
+        </div>
+        
+        <div id="map-view" class="view hidden">
+            <div id="map"></div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
