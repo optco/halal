@@ -3,797 +3,619 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Halal Near Me</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Halal Near Me v2.1</title>
+<script src="data.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --emerald: #1a6b47;
-    --emerald-mid: #22854f;
-    --emerald-light: #d4eddf;
-    --gold: #c4962a;
-    --gold-light: #fdf3dc;
-    --ink: #111a14;
-    --muted: #6b7c73;
-    --surface: #f5f9f6;
-    --white: #ffffff;
-    --border: #dde8e2;
-    --red: #c0392b;
-  }
+:root {
+  --orb1: #0d4f30;
+  --orb2: #0a3d4a;
+  --orb3: #1a6b48;
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.18);
+  --glass-card: rgba(255,255,255,0.11);
+  --glass-card-hover: rgba(255,255,255,0.18);
+  --glass-header: rgba(10,40,25,0.55);
+  --text-primary: #e8f5ee;
+  --text-secondary: rgba(220,245,230,0.65);
+  --gold: #f0c060;
+  --gold-soft: rgba(240,192,96,0.18);
+  --green-glow: rgba(52,211,130,0.22);
+  --green-accent: #34d382;
+  --blur: blur(18px);
+  --blur-lg: blur(28px);
+  --radius: 16px;
+}
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--surface);
-    color: var(--ink);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  overflow: hidden;
+}
 
-  /* HEADER */
-  header {
-    background: var(--emerald);
-    padding: 0 20px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  }
+/* ── BACKGROUND ── */
+body {
+  background: #071a0f;
+  position: relative;
+}
 
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: var(--white);
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.bg-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 20% 0%, #0d4f30 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 100%, #083040 0%, transparent 60%),
+              linear-gradient(160deg, #071a0f 0%, #0b2a1a 50%, #071520 100%);
+}
 
-  .logo-badge {
-    background: var(--gold);
-    color: var(--white);
-    font-size: 0.6rem;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 3px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  animation: drift linear infinite;
+}
 
-  /* TOGGLE */
-  .view-toggle {
-    display: flex;
-    background: rgba(255,255,255,0.15);
-    border-radius: 8px;
-    padding: 3px;
-    gap: 2px;
-  }
+.orb-1 { width: 420px; height: 420px; background: radial-gradient(circle, #1a7a4a, transparent 70%); top: -80px; left: -60px; animation-duration: 22s; animation-name: drift1; }
+.orb-2 { width: 350px; height: 350px; background: radial-gradient(circle, #0d5060, transparent 70%); bottom: -60px; right: -40px; animation-duration: 28s; animation-name: drift2; }
+.orb-3 { width: 280px; height: 280px; background: radial-gradient(circle, #2d8a55, transparent 70%); top: 40%; left: 55%; animation-duration: 18s; animation-name: drift3; }
 
-  .view-btn {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.7);
-    cursor: pointer;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s;
-  }
+@keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(60px,40px) scale(1.08); } 66% { transform: translate(-30px,70px) scale(0.95); } }
+@keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 40% { transform: translate(-50px,-40px) scale(1.1); } 70% { transform: translate(30px,-20px) scale(0.93); } }
+@keyframes drift3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,50px) scale(1.12); } }
 
-  .view-btn.active {
-    background: var(--white);
-    color: var(--emerald);
-  }
+/* ── APP SHELL ── */
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
 
-  /* SEARCH BAR */
-  .search-bar {
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+/* ── HEADER ── */
+header {
+  background: var(--glass-header);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border-bottom: 1px solid var(--glass-border);
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  flex-shrink: 0;
+  z-index: 100;
+}
 
-  .locate-btn {
-    background: var(--emerald);
-    color: var(--white);
-    border: none;
-    cursor: pointer;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    transition: background 0.2s;
-  }
+.logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--text-primary); display: flex; align-items: center; gap: 9px; }
+.logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--green-accent), #1da362); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 0 14px rgba(52,211,130,0.4); }
+.logo-sub { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); }
 
-  .locate-btn:hover { background: var(--emerald-mid); }
-  .locate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+/* ── TOGGLE ── */
+.toggle { display: flex; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); border: 1px solid var(--glass-border); border-radius: 10px; padding: 3px; gap: 2px; }
+.toggle-btn { background: none; border: none; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 600; padding: 5px 14px; border-radius: 7px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
+.toggle-btn.active { background: rgba(52,211,130,0.2); color: var(--green-accent); box-shadow: 0 0 12px rgba(52,211,130,0.15); }
 
-  .search-input-wrap {
-    flex: 1;
-    position: relative;
-  }
+/* ── SEARCH ── */
+.search-wrap { padding: 10px 16px; background: rgba(0,0,0,0.2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); flex-shrink: 0; }
+.search-inner { position: relative; }
+.search-inner svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
+.search-input { width: 100%; padding: 9px 14px 9px 38px; background: rgba(255,255,255,0.07); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: var(--text-primary); outline: none; transition: border-color 0.2s, background 0.2s; }
+.search-input::placeholder { color: var(--text-secondary); }
+.search-input:focus { border-color: var(--green-accent); background: rgba(255,255,255,0.11); box-shadow: 0 0 0 3px rgba(52,211,130,0.12); }
 
-  .search-input {
-    width: 100%;
-    padding: 10px 14px 10px 36px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    color: var(--ink);
-    background: var(--surface);
-    outline: none;
-    transition: border-color 0.2s;
-  }
+/* ── VIEWS ── */
+.views { flex: 1; overflow: hidden; position: relative; }
+.view { position: absolute; inset: 0; display: none; }
+.view.active { display: block; }
 
-  .search-input:focus { border-color: var(--emerald); background: var(--white); }
+/* ── LIST VIEW ── */
+#list-view { overflow-y: auto; padding: 14px 16px 28px; scrollbar-width: thin; scrollbar-color: rgba(52,211,130,0.3) transparent; }
+#list-view::-webkit-scrollbar { width: 4px; }
+#list-view::-webkit-scrollbar-track { background: transparent; }
+#list-view::-webkit-scrollbar-thumb { background: rgba(52,211,130,0.3); border-radius: 4px; }
+.list-header { font-size: 0.71rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
 
-  .search-icon {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    font-size: 1rem;
-    pointer-events: none;
-  }
+/* ── CARD ── */
+.card { display: flex; gap: 13px; align-items: flex-start; background: var(--glass-card); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; cursor: pointer; text-decoration: none; color: inherit; transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%); pointer-events: none; }
+.card:hover { background: var(--glass-card-hover); border-color: rgba(52,211,130,0.45); box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(52,211,130,0.2), inset 0 1px 0 rgba(255,255,255,0.1); transform: translateY(-1px); }
+.card-emoji { width: 44px; height: 44px; background: rgba(52,211,130,0.15); border: 1px solid rgba(52,211,130,0.25); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+.card-body { flex: 1; min-width: 0; }
+.card-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.97rem; color: var(--text-primary); margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-cuisine { font-size: 0.72rem; font-weight: 600; color: var(--green-accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.card-address { font-size: 0.79rem; color: var(--text-secondary); margin-bottom: 7px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-footer { display: flex; flex-wrap: wrap; gap: 5px; }
+.badge { font-size: 0.69rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.badge-halal { background: rgba(52,211,130,0.18); color: var(--green-accent); border: 1px solid rgba(52,211,130,0.3); }
+.badge-tag { background: rgba(255,255,255,0.1); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.12); }
+.badge-phone { background: var(--gold-soft); color: var(--gold); border: 1px solid rgba(240,192,96,0.25); }
+.card-notes { font-size: 0.74rem; color: var(--text-secondary); font-style: italic; margin-top: 5px; opacity: 0.8; }
+.card-maplink { flex-shrink: 0; width: 36px; height: 36px; background: rgba(52,211,130,0.12); border: 1px solid rgba(52,211,130,0.25); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1rem; align-self: center; transition: background 0.15s, box-shadow 0.15s; }
+.card:hover .card-maplink { background: rgba(52,211,130,0.28); box-shadow: 0 0 12px rgba(52,211,130,0.3); }
 
-  /* STATUS */
-  .status-bar {
-    padding: 8px 20px;
-    font-size: 0.8rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 34px;
-  }
+/* ── MAP VIEW ── */
+#map-view { display: none; }
+#map-view.active { display: block; }
+#map { width: 100%; height: 100%; }
 
-  .status-bar.error { color: var(--red); }
-  .status-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--gold);
-    flex-shrink: 0;
-  }
-  .status-dot.green { background: var(--emerald); }
+/* ── LEAFLET overrides ── */
+.leaflet-popup-content-wrapper { background: rgba(10,28,18,0.82) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border: 1px solid rgba(255,255,255,0.18) !important; border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; padding: 0 !important; }
+.leaflet-popup-content { margin: 14px 14px !important; color: var(--text-primary) !important; }
+.leaflet-popup-tip-container { display: none; }
+.leaflet-control-zoom a { background: rgba(10,28,18,0.75) !important; backdrop-filter: blur(12px) !important; color: var(--text-primary) !important; border-color: rgba(255,255,255,0.15) !important; }
+.leaflet-control-zoom a:hover { background: rgba(52,211,130,0.2) !important; }
 
-  /* MAIN */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* ── MAP POPUP ── */
+.popup { font-family: 'Inter', sans-serif; min-width: 195px; }
+.popup-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px; }
+.popup-cuisine { font-size: 0.71rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--green-accent); margin-bottom: 5px; }
+.popup-address { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 9px; line-height: 1.4; }
+.popup-open-btn { display: block; width: 100%; background: linear-gradient(135deg, rgba(52,211,130,0.3), rgba(29,163,98,0.3)); color: var(--green-accent); border: 1px solid rgba(52,211,130,0.4); border-radius: 9px; padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; transition: background 0.15s, box-shadow 0.15s; backdrop-filter: blur(6px); }
+.popup-open-btn:hover { background: linear-gradient(135deg, rgba(52,211,130,0.45), rgba(29,163,98,0.45)); box-shadow: 0 0 14px rgba(52,211,130,0.3); color: #fff; }
+.popup-phone { font-size: 0.74rem; color: var(--text-secondary); text-align: center; margin-top: 6px; }
+.popup-notes { font-size: 0.73rem; color: var(--text-secondary); font-style: italic; margin-bottom: 8px; opacity: 0.8; }
 
-  /* MAP VIEW */
-  #map-view {
-    display: none;
-    flex: 1;
-    position: relative;
-  }
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+.empty-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.empty h3 { font-family: 'Syne', sans-serif; font-size: 1rem; color: var(--text-primary); margin-bottom: 4px; }
+.empty p { font-size: 0.84rem; }
 
-  #map-view.active { display: flex; flex-direction: column; }
+/* ── LOCATE PROMPT ── */
+.locate-prompt { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px; min-height: 70vh; }
+.locate-icon { width: 80px; height: 80px; background: linear-gradient(135deg, rgba(52,211,130,0.2), rgba(29,163,98,0.2)); border: 1px solid rgba(52,211,130,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 24px; box-shadow: 0 0 40px rgba(52,211,130,0.15); animation: pulse 2.5s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52,211,130,0.3); } 70% { box-shadow: 0 0 0 20px rgba(52,211,130,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,130,0); } }
+.locate-prompt h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; color: var(--text-primary); margin-bottom: 8px; }
+.locate-prompt p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 32px; max-width: 280px; line-height: 1.5; }
+.locate-btn { background: linear-gradient(135deg, rgba(52,211,130,0.25), rgba(29,163,98,0.25)); color: var(--green-accent); border: 1px solid rgba(52,211,130,0.4); border-radius: 12px; padding: 12px 28px; font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(52,211,130,0.15); }
+.locate-btn:hover { background: linear-gradient(135deg, rgba(52,211,130,0.4), rgba(29,163,98,0.4)); box-shadow: 0 6px 28px rgba(52,211,130,0.3); transform: translateY(-2px); }
+.locate-btn:active { transform: translateY(0); }
 
-  #map {
-    flex: 1;
-    min-height: 400px;
-  }
+/* ── MAP LOCATE BTN ── */
+.map-locate-btn { position: absolute; bottom: 24px; right: 16px; z-index: 1000; width: 46px; height: 46px; background: rgba(10,28,18,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--green-accent); cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: all 0.2s; }
+.map-locate-btn:hover { background: rgba(52,211,130,0.2); box-shadow: 0 0 16px rgba(52,211,130,0.3); }
 
-  /* LIST VIEW */
-  #list-view {
-    display: none;
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px;
-  }
-
-  #list-view.active { display: block; }
-
-  /* CARDS */
-  .results-count {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 12px;
-  }
-
-  .restaurant-card {
-    background: var(--white);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: box-shadow 0.2s, border-color 0.2s;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-
-  .restaurant-card:hover {
-    box-shadow: 0 4px 20px rgba(26,107,71,0.1);
-    border-color: var(--emerald);
-  }
-
-  .card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: var(--emerald-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-  }
-
-  .card-body { flex: 1; min-width: 0; }
-
-  .card-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--ink);
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .card-cuisine {
-    font-size: 0.78rem;
-    color: var(--emerald);
-    font-weight: 600;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .card-address {
-    font-size: 0.8rem;
-    color: var(--muted);
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.73rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 20px;
-    white-space: nowrap;
-  }
-
-  .badge-halal { background: var(--emerald-light); color: var(--emerald); }
-  .badge-open { background: #e7f6ec; color: #1e7e34; }
-  .badge-closed { background: #fde8e7; color: var(--red); }
-  .badge-dist { background: var(--gold-light); color: var(--gold); }
-
-  .card-rating {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--gold);
-  }
-
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-
-  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-
-  .empty-state h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    color: var(--ink);
-    margin-bottom: 6px;
-  }
-
-  .empty-state p { font-size: 0.88rem; line-height: 1.5; }
-
-  /* LOADING SPINNER */
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2.5px solid rgba(255,255,255,0.3);
-    border-top-color: var(--white);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* MAP POPUP */
-  .leaflet-popup-content-wrapper {
-    border-radius: 12px !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
-  }
-
-  .map-popup {
-    font-family: 'Inter', sans-serif;
-    min-width: 180px;
-  }
-
-  .map-popup-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--ink);
-    margin-bottom: 2px;
-  }
-
-  .map-popup-cuisine {
-    font-size: 0.75rem;
-    color: var(--emerald);
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  .map-popup-address {
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-
-  /* OVERPASS INFO */
-  .data-source {
-    padding: 6px 20px;
-    background: var(--gold-light);
-    font-size: 0.75rem;
-    color: var(--gold);
-    font-weight: 500;
-    border-bottom: 1px solid #f0dda5;
-  }
-
-  @media (max-width: 480px) {
-    .locate-btn span { display: none; }
-    header { padding: 0 14px; }
-    .search-bar { padding: 10px 14px; }
-  }
+/* ── RESPONSIVE ── */
+@media (max-width: 400px) {
+  .toggle-btn span { display: none; }
+  .toggle-btn { padding: 5px 10px; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    🌿 Halal Near Me
-    <span class="logo-badge">Halal</span>
-  </div>
-  <div class="view-toggle">
-    <button class="view-btn active" id="btn-list" onclick="switchView('list')">
-      ☰ <span>List</span>
-    </button>
-    <button class="view-btn" id="btn-map" onclick="switchView('map')">
-      🗺 <span>Map</span>
-    </button>
-  </div>
-</header>
-
-<div class="search-bar">
-  <button class="locate-btn" id="locate-btn" onclick="findLocation()">
-    <span id="locate-icon">📍</span>
-    <span>Use my location</span>
-  </button>
-  <div class="search-input-wrap">
-    <span class="search-icon">🔍</span>
-    <input type="text" class="search-input" id="keyword-input" placeholder="Filter by name or cuisine…" oninput="filterResults()" />
-  </div>
+<!-- LIVING BACKGROUND -->
+<div class="bg-scene">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 </div>
 
-<div class="status-bar" id="status-bar">
-  <span class="status-dot"></span>
-  <span id="status-text">Tap "Use my location" to find halal restaurants nearby.</span>
-</div>
+<div class="app">
 
-<div class="data-source" id="data-source" style="display:none">
-  📡 Live data from OpenStreetMap · Results may vary by area
-</div>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      Halal Near Me
+      <span class="logo-sub" id="logo-count"></span>
+    </div>
+    <div class="toggle">
+      <button class="toggle-btn active" id="btn-list" onclick="switchView('list')">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/>
+        </svg>
+        <span>List</span>
+      </button>
+      <button class="toggle-btn" id="btn-map" onclick="switchView('map')">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1,2 5,4 9,2 13,4 13,12 9,10 5,12 1,10"/>
+          <line x1="5" y1="4" x2="5" y2="12"/><line x1="9" y1="2" x2="9" y2="10"/>
+        </svg>
+        <span>Map</span>
+      </button>
+    </div>
+  </header>
 
-<div class="main">
-  <div id="list-view" class="active">
-    <div class="empty-state">
-      <div class="empty-icon">🕌</div>
-      <h3>Find halal food near you</h3>
-      <p>Allow location access to discover<br>halal restaurants in your area.</p>
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <div class="search-inner">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="6.5" cy="6.5" r="5"/><line x1="11" y1="11" x2="15" y2="15"/>
+      </svg>
+      <input class="search-input" type="text" id="search" placeholder="Search by name or cuisine…" oninput="render()">
     </div>
   </div>
 
-  <div id="map-view">
-    <div id="map"></div>
+  <!-- VIEWS -->
+  <div class="views">
+
+    <div class="view active" id="list-view">
+      <div id="list-container"></div>
+    </div>
+
+    <div class="view" id="map-view">
+      <div id="map"></div>
+      <button class="map-locate-btn" id="map-locate-btn" onclick="locateMe(true)" title="Center on my location">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="3"></circle>
+          <line x1="12" y1="2" x2="12" y2="4"></line>
+          <line x1="12" y1="20" x2="12" y2="22"></line>
+          <line x1="2" y1="12" x2="4" y2="12"></line>
+          <line x1="20" y1="12" x2="22" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+
   </div>
 </div>
 
 <script>
-let currentView = 'list';
-let allRestaurants = [];
+// ── State ──
+let userLocation = null;
+let searchRadius = 5; // Default nearby radius in km
+let expandedSearch = false;
 let map = null;
-let markers = [];
+let mapMarkers = [];
 let userMarker = null;
-let userLat = null, userLng = null;
 
-// --- VIEW TOGGLE ---
-function switchView(view) {
-  currentView = view;
-  document.getElementById('list-view').classList.toggle('active', view === 'list');
-  document.getElementById('map-view').classList.toggle('active', view === 'map');
-  document.getElementById('btn-list').classList.toggle('active', view === 'list');
-  document.getElementById('btn-map').classList.toggle('active', view === 'map');
-
-  if (view === 'map') {
-    setTimeout(() => {
-      if (!map) initMap();
-      else map.invalidateSize();
-    }, 50);
-  }
+// ── Maps URL (Apple vs Google) ──
+function mapsUrl(lat, lng, name) {
+  const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+  const label = encodeURIComponent(name);
+  if (isApple) return `maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`;
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 }
 
-// --- MAP ---
-function initMap(lat, lng) {
-  const centerLat = lat || 3.1390;
-  const centerLng = lng || 101.6869;
-
-  map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 14);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
-
-  if (lat && lng) addUserMarker(lat, lng);
-  renderMapMarkers();
-}
-
-function addUserMarker(lat, lng) {
-  if (userMarker) userMarker.remove();
-  const icon = L.divIcon({
-    html: `<div style="width:16px;height:16px;background:#1a6b47;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(26,107,71,0.3)"></div>`,
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
-  });
-  userMarker = L.marker([lat, lng], { icon }).addTo(map);
-  userMarker.bindPopup('<b>You are here</b>');
-}
-
-function renderMapMarkers() {
-  if (!map) return;
-  markers.forEach(m => m.remove());
-  markers = [];
-
-  const filtered = getFiltered();
-  filtered.forEach(r => {
-    if (!r.lat || !r.lng) return;
-    const icon = L.divIcon({
-      html: `<div style="background:#c4962a;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;">
-               <span style="transform:rotate(45deg);font-size:13px;">🍽</span>
-             </div>`,
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -34]
-    });
-
-    const isOpen = r.opening_hours ? checkOpen(r.opening_hours) : null;
-    const openBadge = isOpen === true ? '🟢 Open' : isOpen === false ? '🔴 Closed' : '';
-
-    const popup = `
-      <div class="map-popup">
-        <div class="map-popup-name">${r.name}</div>
-        <div class="map-popup-cuisine">${r.cuisine || 'Restaurant'}</div>
-        <div class="map-popup-address">${r.address || ''}</div>
-        ${openBadge ? `<div style="margin-top:5px;font-size:0.78rem;font-weight:600">${openBadge}</div>` : ''}
-        ${r.dist ? `<div style="margin-top:3px;font-size:0.75rem;color:#c4962a">📍 ${r.dist} km away</div>` : ''}
-      </div>`;
-
-    const m = L.marker([r.lat, r.lng], { icon }).addTo(map);
-    m.bindPopup(popup);
-    markers.push(m);
-  });
-}
-
-// --- GEOLOCATION ---
-function findLocation() {
-  if (!navigator.geolocation) {
-    setStatus('Geolocation is not supported by your browser.', true);
-    return;
-  }
-
-  const btn = document.getElementById('locate-btn');
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span> <span>Locating…</span>`;
-  setStatus('Getting your location…');
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      btn.disabled = false;
-      btn.innerHTML = `<span>📍</span> <span>Refresh</span>`;
-      setStatus('Location found. Searching for halal restaurants…');
-      fetchHalalRestaurants(userLat, userLng);
-    },
-    err => {
-      btn.disabled = false;
-      btn.innerHTML = `<span>📍</span> <span>Use my location</span>`;
-      const msgs = {
-        1: 'Location access denied. Please allow location in your browser settings.',
-        2: 'Unable to determine your location. Try again.',
-        3: 'Location request timed out. Try again.'
-      };
-      setStatus(msgs[err.code] || 'Location error.', true);
-    },
-    { timeout: 12000, maximumAge: 60000, enableHighAccuracy: true }
-  );
-}
-
-// --- OVERPASS API ---
-async function fetchHalalRestaurants(lat, lng) {
-  const radius = 3000;
-  const query = `
-    [out:json][timeout:25];
-    (
-      node["amenity"="restaurant"]["diet:halal"="yes"](around:${radius},${lat},${lng});
-      node["amenity"="restaurant"]["diet:halal"="only"](around:${radius},${lat},${lng});
-      node["amenity"="fast_food"]["diet:halal"="yes"](around:${radius},${lat},${lng});
-      node["amenity"="fast_food"]["diet:halal"="only"](around:${radius},${lat},${lng});
-      node["amenity"="restaurant"]["cuisine"~"halal"](around:${radius},${lat},${lng});
-      node["amenity"="cafe"]["diet:halal"="yes"](around:${radius},${lat},${lng});
-    );
-    out body;
-  `;
-
-  try {
-    const resp = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query
-    });
-    const data = await resp.json();
-    processResults(data.elements, lat, lng);
-  } catch (e) {
-    setStatus('Could not reach the restaurant database. Check your internet connection.', true);
-    document.getElementById('locate-btn').disabled = false;
-    document.getElementById('locate-btn').innerHTML = `<span>📍</span> <span>Use my location</span>`;
-  }
-}
-
-function processResults(elements, lat, lng) {
-  allRestaurants = elements
-    .filter(e => e.tags && e.tags.name)
-    .map(e => {
-      const tags = e.tags;
-      const dist = haversine(lat, lng, e.lat, e.lon);
-      return {
-        id: e.id,
-        name: tags.name,
-        cuisine: formatCuisine(tags.cuisine),
-        address: buildAddress(tags),
-        lat: e.lat,
-        lng: e.lon,
-        phone: tags.phone || tags['contact:phone'],
-        opening_hours: tags.opening_hours,
-        dist: dist.toFixed(1),
-        distNum: dist,
-        emoji: cuisineEmoji(tags.cuisine)
-      };
-    })
-    .sort((a, b) => a.distNum - b.distNum);
-
-  document.getElementById('data-source').style.display = 'block';
-
-  if (allRestaurants.length === 0) {
-    setStatus('No halal restaurants found within 3 km. Try a different area.', false, true);
-    renderEmpty('No halal restaurants found nearby', 'Try moving to a different area or check back later.');
-  } else {
-    setStatus(`Found ${allRestaurants.length} halal restaurant${allRestaurants.length !== 1 ? 's' : ''} within 3 km`, false, true);
-    renderList();
-  }
-
-  if (map) {
-    map.setView([lat, lng], 14);
-    addUserMarker(lat, lng);
-    renderMapMarkers();
-  } else if (currentView === 'map') {
-    initMap(lat, lng);
-  }
-}
-
-// --- RENDER LIST ---
-function renderList() {
-  const filtered = getFiltered();
-  const container = document.getElementById('list-view');
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🔍</div>
-        <h3>No matches</h3>
-        <p>Try a different keyword or clear the filter.</p>
-      </div>`;
-    return;
-  }
-
-  const count = `<div class="results-count">${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''}</div>`;
-  const cards = filtered.map(r => {
-    const isOpen = r.opening_hours ? checkOpen(r.opening_hours) : null;
-    const openBadge = isOpen === true
-      ? `<span class="badge badge-open">● Open</span>`
-      : isOpen === false
-      ? `<span class="badge badge-closed">● Closed</span>`
-      : '';
-
-    return `
-      <div class="restaurant-card" onclick="focusOnMap(${r.lat}, ${r.lng})">
-        <div class="card-icon">${r.emoji}</div>
-        <div class="card-body">
-          <div class="card-name">${r.name}</div>
-          ${r.cuisine ? `<div class="card-cuisine">${r.cuisine}</div>` : ''}
-          <div class="card-meta">
-            <span class="card-address">${r.address || 'Address unavailable'}</span>
-          </div>
-          <div class="card-meta" style="margin-top:6px">
-            <span class="badge badge-halal">✓ Halal</span>
-            ${openBadge}
-            ${r.dist ? `<span class="badge badge-dist">📍 ${r.dist} km</span>` : ''}
-            ${r.phone ? `<span class="badge" style="background:#f0f0f0;color:#444">📞</span>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = count + cards;
-}
-
-function renderEmpty(title, desc) {
-  document.getElementById('list-view').innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">🕌</div>
-      <h3>${title}</h3>
-      <p>${desc}</p>
-    </div>`;
-}
-
-function getFiltered() {
-  const kw = document.getElementById('keyword-input').value.toLowerCase().trim();
-  if (!kw) return allRestaurants;
-  return allRestaurants.filter(r =>
-    r.name.toLowerCase().includes(kw) ||
-    (r.cuisine && r.cuisine.toLowerCase().includes(kw)) ||
-    (r.address && r.address.toLowerCase().includes(kw))
-  );
-}
-
-function filterResults() {
-  renderList();
-  renderMapMarkers();
-}
-
-function focusOnMap(lat, lng) {
-  switchView('map');
-  setTimeout(() => {
-    if (!map) { initMap(lat, lng); return; }
-    map.invalidateSize();
-    map.setView([lat, lng], 17);
-    markers.forEach(m => {
-      if (m.getLatLng().lat === lat && m.getLatLng().lng === lng) {
-        m.openPopup();
-      }
-    });
-  }, 80);
-}
-
-// --- HELPERS ---
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function formatCuisine(c) {
-  if (!c) return null;
-  return c.split(';').map(x => x.trim().replace(/_/g,' ')).map(capitalize).join(', ');
-}
-
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-function buildAddress(tags) {
-  const parts = [
-    tags['addr:housenumber'] && tags['addr:street'] ? `${tags['addr:housenumber']} ${tags['addr:street']}` : tags['addr:street'],
-    tags['addr:city'] || tags['addr:suburb'] || tags['addr:postcode']
-  ].filter(Boolean);
-  return parts.join(', ') || null;
-}
-
-function cuisineEmoji(c) {
-  if (!c) return '🍽';
-  c = c.toLowerCase();
-  if (c.includes('burger') || c.includes('american')) return '🍔';
-  if (c.includes('pizza') || c.includes('italian')) return '🍕';
-  if (c.includes('chinese')) return '🥡';
+// ── Cuisine emoji ──
+function emoji(cuisine) {
+  if (!cuisine) return '🍽';
+  const c = cuisine.toLowerCase();
   if (c.includes('indian') || c.includes('curry')) return '🍛';
   if (c.includes('turkish') || c.includes('kebab')) return '🥙';
-  if (c.includes('malay') || c.includes('nasi')) return '🍚';
-  if (c.includes('sushi') || c.includes('japanese')) return '🍱';
-  if (c.includes('middle') || c.includes('arab') || c.includes('lebanese')) return '🥗';
+  if (c.includes('arab') || c.includes('middle') || c.includes('lebanese')) return '🥗';
+  if (c.includes('malay') || c.includes('indonesian')) return '🍚';
+  if (c.includes('pakistan')) return '🍖';
+  if (c.includes('chinese')) return '🥡';
   if (c.includes('thai')) return '🍜';
-  if (c.includes('sandwich') || c.includes('sub')) return '🥪';
-  if (c.includes('seafood') || c.includes('fish')) return '🐟';
-  if (c.includes('chicken')) return '🍗';
+  if (c.includes('burger') || c.includes('american')) return '🍔';
+  if (c.includes('pizza') || c.includes('italian')) return '🍕';
+  if (c.includes('seafood')) return '🐟';
   if (c.includes('cafe') || c.includes('coffee')) return '☕';
   return '🍽';
 }
 
-function checkOpen(oh) {
-  // Basic heuristic: look for "24/7" or check current day/time
-  if (!oh) return null;
-  if (oh === '24/7') return true;
-  try {
-    const now = new Date();
-    const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-    const today = days[now.getDay()];
-    const hr = now.getHours() * 60 + now.getMinutes();
-    // Very basic: look for "HH:MM-HH:MM" pattern
-    const timeMatch = oh.match(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
-    if (timeMatch) {
-      const open = parseInt(timeMatch[1])*60 + parseInt(timeMatch[2]);
-      const close = parseInt(timeMatch[3])*60 + parseInt(timeMatch[4]);
-      return hr >= open && hr < close;
-    }
-  } catch(e) {}
-  return null;
+// ── Haversine Distance ──
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
-function setStatus(msg, isError = false, isDone = false) {
-  const bar = document.getElementById('status-bar');
-  const dot = bar.querySelector('.status-dot');
-  document.getElementById('status-text').textContent = msg;
-  bar.className = 'status-bar' + (isError ? ' error' : '');
-  if (dot) dot.className = 'status-dot' + (isDone ? ' green' : '');
+// ── Get Visible Restaurants (Handles Location, Radius, and Search) ──
+function getVisibleRestaurants() {
+  if (!userLocation) return [];
+  
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  
+  const withDist = RESTAURANTS.map(r => ({
+    ...r,
+    distance: getDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)
+  }));
+  
+  withDist.sort((a, b) => a.distance - b.distance);
+  
+  let result = expandedSearch ? withDist : withDist.filter(r => r.distance <= searchRadius);
+  
+  if (q) {
+    result = result.filter(r =>
+      r.name.toLowerCase().includes(q) ||
+      (r.cuisine && r.cuisine.toLowerCase().includes(q)) ||
+      (r.address && r.address.toLowerCase().includes(q))
+    );
+  }
+  
+  return result;
 }
+
+// ── Render list ──
+function renderList() {
+  const container = document.getElementById('list-container');
+  
+  if (!userLocation) {
+    container.innerHTML = `
+      <div class="locate-prompt">
+        <div class="locate-icon">📍</div>
+        <h2>Find Halal Near You</h2>
+        <p>Allow location access to discover halal restaurants around you.</p>
+        <button class="locate-btn" onclick="locateMe()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Locate Me
+        </button>
+      </div>`;
+    return;
+  }
+
+  const visibleList = getVisibleRestaurants();
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  
+  // Check if there are ANY nearby restaurants (ignoring search query)
+  const allNearby = expandedSearch ? [] : RESTAURANTS.map(r => ({
+     distance: getDistance(userLocation.lat, userLocation.lng, r.lat, r.lng)
+  })).filter(r => r.distance <= searchRadius);
+  
+  const hasNearby = expandedSearch || allNearby.length > 0;
+
+  if (visibleList.length === 0) {
+    if (q) {
+      container.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🔍</div>
+          <h3>No matches</h3>
+          <p>Try a different search term.</p>
+        </div>`;
+    } else if (!hasNearby) {
+       container.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🕌</div>
+          <h3>No halal nearby</h3>
+          <p>We couldn't find any halal restaurants within ${searchRadius} km of your location.</p>
+          <button class="locate-btn" onclick="expandArea()" style="margin-top:20px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="11" y1="8" x2="11" y2="14"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+            Expand Search Area
+          </button>
+        </div>`;
+    } else {
+       container.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🔍</div>
+          <h3>No matches</h3>
+          <p>Try a different search term.</p>
+        </div>`;
+    }
+    return;
+  }
+
+  let headerText = '';
+  if (!expandedSearch) {
+     headerText = `<div class="list-header">${visibleList.length} restaurant${visibleList.length !== 1 ? 's' : ''} within ${searchRadius} km</div>`;
+  } else {
+     headerText = `<div class="list-header">${visibleList.length} restaurant${visibleList.length !== 1 ? 's' : ''} (sorted by distance)</div>`;
+  }
+
+  const cards = visibleList.map(r => {
+    const tags = (r.tags || []).map(t => `<span class="badge badge-tag">${t}</span>`).join('');
+    const phone = r.phone ? `<span class="badge badge-phone">📞 ${r.phone}</span>` : '';
+    const url = mapsUrl(r.lat, r.lng, r.name);
+    const distText = r.distance < 1 ? `${Math.round(r.distance * 1000)} m` : `${r.distance.toFixed(1)} km`;
+
+    return `
+      <a class="card" href="${url}" target="_blank" rel="noopener">
+        <div class="card-emoji">${emoji(r.cuisine)}</div>
+        <div class="card-body">
+          <div class="card-name">${r.name}</div>
+          <div class="card-cuisine">${r.cuisine || 'Restaurant'} · ${distText}</div>
+          <div class="card-address">${r.address}</div>
+          <div class="card-footer">
+            <span class="badge badge-halal">✓ Halal</span>
+            ${tags}
+            ${phone}
+          </div>
+          ${r.notes ? `<div class="card-notes">${r.notes}</div>` : ''}
+        </div>
+        <div class="card-maplink">📍</div>
+      </a>`;
+  }).join('');
+
+  container.innerHTML = `<div style="padding:14px 16px 28px">${headerText}${cards}</div>`;
+}
+
+// ── Expand Area Logic ──
+function expandArea() {
+  expandedSearch = true;
+  render();
+}
+
+// ── Locate Me Logic ──
+function locateMe(fromMap = false) {
+  // If already located, just recenter map or re-render list
+  if (userLocation) {
+    if (map && fromMap) {
+       map.setView([userLocation.lat, userLocation.lng], 14);
+       renderMapMarkers();
+    } else if (!fromMap) {
+       render();
+    }
+    return;
+  }
+  
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+  
+  const container = document.getElementById('list-container');
+  if (!fromMap) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📡</div><h3>Locating...</h3><p>Please wait.</p></div>`;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      expandedSearch = false;
+      searchRadius = 5;
+      
+      if (map) {
+         map.setView([userLocation.lat, userLocation.lng], 13);
+         renderMapMarkers();
+      }
+      if (!fromMap) {
+         render();
+      }
+    },
+    (error) => {
+      let msg = "Unable to retrieve your location.";
+      if (error.code === 1) msg = "Permission denied. Please enable location access.";
+      if (error.code === 2) msg = "Position unavailable.";
+      if (error.code === 3) msg = "Request timed out.";
+      
+      if (!fromMap) {
+        container.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Location Error</h3><p>${msg}</p><button class="locate-btn" onclick="locateMe()" style="margin-top:20px">Try Again</button></div>`;
+      } else {
+        alert(msg);
+      }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+// ── Map ──
+function initMap() {
+  if (map) return;
+  
+  let cLat, cLng;
+  if (userLocation) {
+    cLat = userLocation.lat;
+    cLng = userLocation.lng;
+  } else {
+    const lats = RESTAURANTS.map(r => r.lat);
+    const lngs = RESTAURANTS.map(r => r.lng);
+    cLat = lats.reduce((a,b) => a+b,0) / lats.length;
+    cLng = lngs.reduce((a,b) => a+b,0) / lngs.length;
+  }
+
+  map = L.map('map', { zoomControl: true }).setView([cLat, cLng], 13);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    maxZoom: 19
+  }).addTo(map);
+
+  renderMapMarkers();
+}
+
+function renderMapMarkers() {
+  if (!map) return;
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers = [];
+  
+  if (userMarker) {
+    map.removeLayer(userMarker);
+    userMarker = null;
+  }
+
+  // Add user marker
+  if (userLocation) {
+    const userIcon = L.divIcon({
+      html: `<div style="
+        width: 20px; height: 20px;
+        background: #3b82f6;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4), 0 0 12px rgba(59, 130, 246, 0.6);
+      "></div>`,
+      className: '',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+  }
+
+  const list = getVisibleRestaurants();
+
+  list.forEach(r => {
+    const icon = L.divIcon({
+      html: `<div style="
+        background: linear-gradient(135deg,rgba(52,211,130,0.85),rgba(29,163,98,0.9));
+        width: 38px; height: 38px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 2px solid rgba(255,255,255,0.5);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 16px rgba(52,211,130,0.4);
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(8px);">
+        <span style="transform:rotate(45deg);font-size:16px">${emoji(r.cuisine)}</span>
+      </div>`,
+      className: '',
+      iconSize: [38, 38],
+      iconAnchor: [19, 38],
+      popupAnchor: [0, -42]
+    });
+
+    const url = mapsUrl(r.lat, r.lng, r.name);
+    const distText = r.distance < 1 ? `${Math.round(r.distance * 1000)} m` : `${r.distance.toFixed(1)} km`;
+
+    const popupHTML = `
+      <div class="popup">
+        <div class="popup-name">${r.name}</div>
+        <div class="popup-cuisine">${r.cuisine || 'Restaurant'} · ${distText}</div>
+        <div class="popup-address">${r.address}</div>
+        ${r.notes ? `<div class="popup-notes">${r.notes}</div>` : ''}
+        <a class="popup-open-btn" href="${url}" target="_blank" rel="noopener">📍 Open in Maps</a>
+        ${r.phone ? `<div class="popup-phone">📞 ${r.phone}</div>` : ''}
+      </div>`;
+
+    const m = L.marker([r.lat, r.lng], { icon }).addTo(map);
+    m.bindPopup(popupHTML, { maxWidth: 250 });
+    mapMarkers.push(m);
+  });
+
+  // Adjust map bounds
+  if (list.length > 1) {
+    const bounds = L.latLngBounds(list.map(r => [r.lat, r.lng]));
+    if (userLocation) bounds.extend([userLocation.lat, userLocation.lng]);
+    map.fitBounds(bounds, { padding: [40,40] });
+  } else if (list.length === 1) {
+    map.setView([list[0].lat, list[0].lng], 15);
+  } else if (userLocation) {
+    map.setView([userLocation.lat, userLocation.lng], 12);
+  }
+}
+
+// ── View switch ──
+function switchView(v) {
+  document.getElementById('list-view').classList.toggle('active', v === 'list');
+  document.getElementById('map-view').classList.toggle('active', v === 'map');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  document.getElementById('btn-map').classList.toggle('active', v === 'map');
+
+  if (v === 'map') {
+    setTimeout(() => {
+      initMap();
+      map.invalidateSize();
+      renderMapMarkers();
+    }, 60);
+  }
+}
+
+// ── Combined render ──
+function render() {
+  renderList();
+  if (map) renderMapMarkers();
+}
+
+// ── Boot ──
+document.getElementById('logo-count').textContent = `${RESTAURANTS.length} places`;
+renderList();
 </script>
 </body>
 </html>
