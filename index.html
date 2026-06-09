@@ -1,39 +1,799 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halal Food Finder</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Halal Near Me</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --emerald: #1a6b47;
+    --emerald-mid: #22854f;
+    --emerald-light: #d4eddf;
+    --gold: #c4962a;
+    --gold-light: #fdf3dc;
+    --ink: #111a14;
+    --muted: #6b7c73;
+    --surface: #f5f9f6;
+    --white: #ffffff;
+    --border: #dde8e2;
+    --red: #c0392b;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--emerald);
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--white);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-badge {
+    background: var(--gold);
+    color: var(--white);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* TOGGLE */
+  .view-toggle {
+    display: flex;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .view-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+  }
+
+  .view-btn.active {
+    background: var(--white);
+    color: var(--emerald);
+  }
+
+  /* SEARCH BAR */
+  .search-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .locate-btn {
+    background: var(--emerald);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .locate-btn:hover { background: var(--emerald-mid); }
+  .locate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .search-input-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--emerald); background: var(--white); }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 1rem;
+    pointer-events: none;
+  }
+
+  /* STATUS */
+  .status-bar {
+    padding: 8px 20px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+  }
+
+  .status-bar.error { color: var(--red); }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: var(--emerald); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* MAP VIEW */
+  #map-view {
+    display: none;
+    flex: 1;
+    position: relative;
+  }
+
+  #map-view.active { display: flex; flex-direction: column; }
+
+  #map {
+    flex: 1;
+    min-height: 400px;
+  }
+
+  /* LIST VIEW */
+  #list-view {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+
+  #list-view.active { display: block; }
+
+  /* CARDS */
+  .results-count {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+  }
+
+  .restaurant-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .restaurant-card:hover {
+    box-shadow: 0 4px 20px rgba(26,107,71,0.1);
+    border-color: var(--emerald);
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--emerald-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .card-body { flex: 1; min-width: 0; }
+
+  .card-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-cuisine {
+    font-size: 0.78rem;
+    color: var(--emerald);
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .card-address {
+    font-size: 0.8rem;
+    color: var(--muted);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-halal { background: var(--emerald-light); color: var(--emerald); }
+  .badge-open { background: #e7f6ec; color: #1e7e34; }
+  .badge-closed { background: #fde8e7; color: var(--red); }
+  .badge-dist { background: var(--gold-light); color: var(--gold); }
+
+  .card-rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .empty-state p { font-size: 0.88rem; line-height: 1.5; }
+
+  /* LOADING SPINNER */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: var(--white);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MAP POPUP */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+  }
+
+  .map-popup {
+    font-family: 'Inter', sans-serif;
+    min-width: 180px;
+  }
+
+  .map-popup-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .map-popup-cuisine {
+    font-size: 0.75rem;
+    color: var(--emerald);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .map-popup-address {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* OVERPASS INFO */
+  .data-source {
+    padding: 6px 20px;
+    background: var(--gold-light);
+    font-size: 0.75rem;
+    color: var(--gold);
+    font-weight: 500;
+    border-bottom: 1px solid #f0dda5;
+  }
+
+  @media (max-width: 480px) {
+    .locate-btn span { display: none; }
+    header { padding: 0 14px; }
+    .search-bar { padding: 10px 14px; }
+  }
+</style>
 </head>
 <body>
-    <header>
-        <h1>Halal Finder</h1>
-        <div class="controls">
-            <button id="locate-btn">Find My Location</button>
-            <div class="toggle-container">
-                <button id="toggle-list" class="toggle-btn active">List</button>
-                <button id="toggle-map" class="toggle-btn">Map</button>
-            </div>
-        </div>
-    </header>
 
-    <main>
-        <div id="list-view" class="view">
-            <div id="loader" class="hidden">Searching nearby...</div>
-            <div id="error-msg" class="hidden"></div>
-            <ul id="restaurant-list">
-                <li class="placeholder">Click "Find My Location" to start.</li>
-            </ul>
-        </div>
-        
-        <div id="map-view" class="view hidden">
-            <div id="map"></div>
-        </div>
-    </main>
+<header>
+  <div class="logo">
+    🌿 Halal Near Me
+    <span class="logo-badge">Halal</span>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="btn-list" onclick="switchView('list')">
+      ☰ <span>List</span>
+    </button>
+    <button class="view-btn" id="btn-map" onclick="switchView('map')">
+      🗺 <span>Map</span>
+    </button>
+  </div>
+</header>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+<div class="search-bar">
+  <button class="locate-btn" id="locate-btn" onclick="findLocation()">
+    <span id="locate-icon">📍</span>
+    <span>Use my location</span>
+  </button>
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="keyword-input" placeholder="Filter by name or cuisine…" oninput="filterResults()" />
+  </div>
+</div>
+
+<div class="status-bar" id="status-bar">
+  <span class="status-dot"></span>
+  <span id="status-text">Tap "Use my location" to find halal restaurants nearby.</span>
+</div>
+
+<div class="data-source" id="data-source" style="display:none">
+  📡 Live data from OpenStreetMap · Results may vary by area
+</div>
+
+<div class="main">
+  <div id="list-view" class="active">
+    <div class="empty-state">
+      <div class="empty-icon">🕌</div>
+      <h3>Find halal food near you</h3>
+      <p>Allow location access to discover<br>halal restaurants in your area.</p>
+    </div>
+  </div>
+
+  <div id="map-view">
+    <div id="map"></div>
+  </div>
+</div>
+
+<script>
+let currentView = 'list';
+let allRestaurants = [];
+let map = null;
+let markers = [];
+let userMarker = null;
+let userLat = null, userLng = null;
+
+// --- VIEW TOGGLE ---
+function switchView(view) {
+  currentView = view;
+  document.getElementById('list-view').classList.toggle('active', view === 'list');
+  document.getElementById('map-view').classList.toggle('active', view === 'map');
+  document.getElementById('btn-list').classList.toggle('active', view === 'list');
+  document.getElementById('btn-map').classList.toggle('active', view === 'map');
+
+  if (view === 'map') {
+    setTimeout(() => {
+      if (!map) initMap();
+      else map.invalidateSize();
+    }, 50);
+  }
+}
+
+// --- MAP ---
+function initMap(lat, lng) {
+  const centerLat = lat || 3.1390;
+  const centerLng = lng || 101.6869;
+
+  map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 14);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  if (lat && lng) addUserMarker(lat, lng);
+  renderMapMarkers();
+}
+
+function addUserMarker(lat, lng) {
+  if (userMarker) userMarker.remove();
+  const icon = L.divIcon({
+    html: `<div style="width:16px;height:16px;background:#1a6b47;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(26,107,71,0.3)"></div>`,
+    className: '',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  userMarker = L.marker([lat, lng], { icon }).addTo(map);
+  userMarker.bindPopup('<b>You are here</b>');
+}
+
+function renderMapMarkers() {
+  if (!map) return;
+  markers.forEach(m => m.remove());
+  markers = [];
+
+  const filtered = getFiltered();
+  filtered.forEach(r => {
+    if (!r.lat || !r.lng) return;
+    const icon = L.divIcon({
+      html: `<div style="background:#c4962a;width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;">
+               <span style="transform:rotate(45deg);font-size:13px;">🍽</span>
+             </div>`,
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -34]
+    });
+
+    const isOpen = r.opening_hours ? checkOpen(r.opening_hours) : null;
+    const openBadge = isOpen === true ? '🟢 Open' : isOpen === false ? '🔴 Closed' : '';
+
+    const popup = `
+      <div class="map-popup">
+        <div class="map-popup-name">${r.name}</div>
+        <div class="map-popup-cuisine">${r.cuisine || 'Restaurant'}</div>
+        <div class="map-popup-address">${r.address || ''}</div>
+        ${openBadge ? `<div style="margin-top:5px;font-size:0.78rem;font-weight:600">${openBadge}</div>` : ''}
+        ${r.dist ? `<div style="margin-top:3px;font-size:0.75rem;color:#c4962a">📍 ${r.dist} km away</div>` : ''}
+      </div>`;
+
+    const m = L.marker([r.lat, r.lng], { icon }).addTo(map);
+    m.bindPopup(popup);
+    markers.push(m);
+  });
+}
+
+// --- GEOLOCATION ---
+function findLocation() {
+  if (!navigator.geolocation) {
+    setStatus('Geolocation is not supported by your browser.', true);
+    return;
+  }
+
+  const btn = document.getElementById('locate-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> <span>Locating…</span>`;
+  setStatus('Getting your location…');
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      btn.disabled = false;
+      btn.innerHTML = `<span>📍</span> <span>Refresh</span>`;
+      setStatus('Location found. Searching for halal restaurants…');
+      fetchHalalRestaurants(userLat, userLng);
+    },
+    err => {
+      btn.disabled = false;
+      btn.innerHTML = `<span>📍</span> <span>Use my location</span>`;
+      const msgs = {
+        1: 'Location access denied. Please allow location in your browser settings.',
+        2: 'Unable to determine your location. Try again.',
+        3: 'Location request timed out. Try again.'
+      };
+      setStatus(msgs[err.code] || 'Location error.', true);
+    },
+    { timeout: 12000, maximumAge: 60000, enableHighAccuracy: true }
+  );
+}
+
+// --- OVERPASS API ---
+async function fetchHalalRestaurants(lat, lng) {
+  const radius = 3000;
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["amenity"="restaurant"]["diet:halal"="yes"](around:${radius},${lat},${lng});
+      node["amenity"="restaurant"]["diet:halal"="only"](around:${radius},${lat},${lng});
+      node["amenity"="fast_food"]["diet:halal"="yes"](around:${radius},${lat},${lng});
+      node["amenity"="fast_food"]["diet:halal"="only"](around:${radius},${lat},${lng});
+      node["amenity"="restaurant"]["cuisine"~"halal"](around:${radius},${lat},${lng});
+      node["amenity"="cafe"]["diet:halal"="yes"](around:${radius},${lat},${lng});
+    );
+    out body;
+  `;
+
+  try {
+    const resp = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: query
+    });
+    const data = await resp.json();
+    processResults(data.elements, lat, lng);
+  } catch (e) {
+    setStatus('Could not reach the restaurant database. Check your internet connection.', true);
+    document.getElementById('locate-btn').disabled = false;
+    document.getElementById('locate-btn').innerHTML = `<span>📍</span> <span>Use my location</span>`;
+  }
+}
+
+function processResults(elements, lat, lng) {
+  allRestaurants = elements
+    .filter(e => e.tags && e.tags.name)
+    .map(e => {
+      const tags = e.tags;
+      const dist = haversine(lat, lng, e.lat, e.lon);
+      return {
+        id: e.id,
+        name: tags.name,
+        cuisine: formatCuisine(tags.cuisine),
+        address: buildAddress(tags),
+        lat: e.lat,
+        lng: e.lon,
+        phone: tags.phone || tags['contact:phone'],
+        opening_hours: tags.opening_hours,
+        dist: dist.toFixed(1),
+        distNum: dist,
+        emoji: cuisineEmoji(tags.cuisine)
+      };
+    })
+    .sort((a, b) => a.distNum - b.distNum);
+
+  document.getElementById('data-source').style.display = 'block';
+
+  if (allRestaurants.length === 0) {
+    setStatus('No halal restaurants found within 3 km. Try a different area.', false, true);
+    renderEmpty('No halal restaurants found nearby', 'Try moving to a different area or check back later.');
+  } else {
+    setStatus(`Found ${allRestaurants.length} halal restaurant${allRestaurants.length !== 1 ? 's' : ''} within 3 km`, false, true);
+    renderList();
+  }
+
+  if (map) {
+    map.setView([lat, lng], 14);
+    addUserMarker(lat, lng);
+    renderMapMarkers();
+  } else if (currentView === 'map') {
+    initMap(lat, lng);
+  }
+}
+
+// --- RENDER LIST ---
+function renderList() {
+  const filtered = getFiltered();
+  const container = document.getElementById('list-view');
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No matches</h3>
+        <p>Try a different keyword or clear the filter.</p>
+      </div>`;
+    return;
+  }
+
+  const count = `<div class="results-count">${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''}</div>`;
+  const cards = filtered.map(r => {
+    const isOpen = r.opening_hours ? checkOpen(r.opening_hours) : null;
+    const openBadge = isOpen === true
+      ? `<span class="badge badge-open">● Open</span>`
+      : isOpen === false
+      ? `<span class="badge badge-closed">● Closed</span>`
+      : '';
+
+    return `
+      <div class="restaurant-card" onclick="focusOnMap(${r.lat}, ${r.lng})">
+        <div class="card-icon">${r.emoji}</div>
+        <div class="card-body">
+          <div class="card-name">${r.name}</div>
+          ${r.cuisine ? `<div class="card-cuisine">${r.cuisine}</div>` : ''}
+          <div class="card-meta">
+            <span class="card-address">${r.address || 'Address unavailable'}</span>
+          </div>
+          <div class="card-meta" style="margin-top:6px">
+            <span class="badge badge-halal">✓ Halal</span>
+            ${openBadge}
+            ${r.dist ? `<span class="badge badge-dist">📍 ${r.dist} km</span>` : ''}
+            ${r.phone ? `<span class="badge" style="background:#f0f0f0;color:#444">📞</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = count + cards;
+}
+
+function renderEmpty(title, desc) {
+  document.getElementById('list-view').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">🕌</div>
+      <h3>${title}</h3>
+      <p>${desc}</p>
+    </div>`;
+}
+
+function getFiltered() {
+  const kw = document.getElementById('keyword-input').value.toLowerCase().trim();
+  if (!kw) return allRestaurants;
+  return allRestaurants.filter(r =>
+    r.name.toLowerCase().includes(kw) ||
+    (r.cuisine && r.cuisine.toLowerCase().includes(kw)) ||
+    (r.address && r.address.toLowerCase().includes(kw))
+  );
+}
+
+function filterResults() {
+  renderList();
+  renderMapMarkers();
+}
+
+function focusOnMap(lat, lng) {
+  switchView('map');
+  setTimeout(() => {
+    if (!map) { initMap(lat, lng); return; }
+    map.invalidateSize();
+    map.setView([lat, lng], 17);
+    markers.forEach(m => {
+      if (m.getLatLng().lat === lat && m.getLatLng().lng === lng) {
+        m.openPopup();
+      }
+    });
+  }, 80);
+}
+
+// --- HELPERS ---
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function formatCuisine(c) {
+  if (!c) return null;
+  return c.split(';').map(x => x.trim().replace(/_/g,' ')).map(capitalize).join(', ');
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function buildAddress(tags) {
+  const parts = [
+    tags['addr:housenumber'] && tags['addr:street'] ? `${tags['addr:housenumber']} ${tags['addr:street']}` : tags['addr:street'],
+    tags['addr:city'] || tags['addr:suburb'] || tags['addr:postcode']
+  ].filter(Boolean);
+  return parts.join(', ') || null;
+}
+
+function cuisineEmoji(c) {
+  if (!c) return '🍽';
+  c = c.toLowerCase();
+  if (c.includes('burger') || c.includes('american')) return '🍔';
+  if (c.includes('pizza') || c.includes('italian')) return '🍕';
+  if (c.includes('chinese')) return '🥡';
+  if (c.includes('indian') || c.includes('curry')) return '🍛';
+  if (c.includes('turkish') || c.includes('kebab')) return '🥙';
+  if (c.includes('malay') || c.includes('nasi')) return '🍚';
+  if (c.includes('sushi') || c.includes('japanese')) return '🍱';
+  if (c.includes('middle') || c.includes('arab') || c.includes('lebanese')) return '🥗';
+  if (c.includes('thai')) return '🍜';
+  if (c.includes('sandwich') || c.includes('sub')) return '🥪';
+  if (c.includes('seafood') || c.includes('fish')) return '🐟';
+  if (c.includes('chicken')) return '🍗';
+  if (c.includes('cafe') || c.includes('coffee')) return '☕';
+  return '🍽';
+}
+
+function checkOpen(oh) {
+  // Basic heuristic: look for "24/7" or check current day/time
+  if (!oh) return null;
+  if (oh === '24/7') return true;
+  try {
+    const now = new Date();
+    const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    const today = days[now.getDay()];
+    const hr = now.getHours() * 60 + now.getMinutes();
+    // Very basic: look for "HH:MM-HH:MM" pattern
+    const timeMatch = oh.match(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      const open = parseInt(timeMatch[1])*60 + parseInt(timeMatch[2]);
+      const close = parseInt(timeMatch[3])*60 + parseInt(timeMatch[4]);
+      return hr >= open && hr < close;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function setStatus(msg, isError = false, isDone = false) {
+  const bar = document.getElementById('status-bar');
+  const dot = bar.querySelector('.status-dot');
+  document.getElementById('status-text').textContent = msg;
+  bar.className = 'status-bar' + (isError ? ' error' : '');
+  if (dot) dot.className = 'status-dot' + (isDone ? ' green' : '');
+}
+</script>
 </body>
 </html>
